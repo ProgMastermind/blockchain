@@ -26,7 +26,7 @@ func main() {
 func run() error {
 
 	tx := Tx{
-		FromID: "Bill",
+		FromID: "0xF01813E4B85e178A83e29B8E7bF26BD830a25f32",
 		ToID:   "Aaron",
 		Value:  1000,
 	}
@@ -60,5 +60,62 @@ func run() error {
 
 	fmt.Println("PUB", crypto.PubkeyToAddress(*publicKey).String())
 
+	// ==========================================================================
+
+	tx2 := Tx{
+		FromID: "0xF01813E4B85e178A83e29B8E7bF26BD830a25f32",
+		ToID:   "Frank",
+		Value:  250,
+	}
+
+	data2, err := json.Marshal(tx2)
+	if err != nil {
+		return fmt.Errorf("unable to marshal: %w", err)
+	}
+
+	v2 := crypto.Keccak256(data2)
+
+	sig2, err := crypto.Sign(v2, privateKey)
+	if err != nil {
+		return fmt.Errorf("unable to sign: %w", err)
+	}
+
+	fmt.Println("SIG:", hexutil.Encode(sig2))
+
+	// =========================================================================
+	// OVER THE WIRE
+
+	publicKey2, err := crypto.SigToPub(v2, sig2)
+	if err != nil {
+		return fmt.Errorf("unable to pub: %w", err)
+	}
+
+	// even though the signature is different, it generates the same public key
+	fmt.Println("PUB", crypto.PubkeyToAddress(*publicKey2).String())
+
+	// generally we will send the transaction and signature over the wire
+	// =========================================================================
+	// OVER THE WIRE
+	// so here we know where the id is coming from
+	// so public key is nothing but the fromID as we discussed
+	tx3 := Tx{
+		FromID: "0xF01813E4B85e178A83e29B8E7bF26BD830a25f32",
+		ToID:   "Frank",
+		Value:  250,
+	}
+
+	data3, err := json.Marshal(tx3)
+	if err != nil {
+		return fmt.Errorf("unable to marshal: %w", err)
+	}
+
+	v3 := crypto.Keccak256(data3)
+
+	publicKey3, err := crypto.SigToPub(v3, sig2)
+	if err != nil {
+		return fmt.Errorf("unable to pub: %w", err)
+	}
+
+	fmt.Println("PUB", crypto.PubkeyToAddress(*publicKey3).String())
 	return nil
 }
