@@ -48,7 +48,17 @@ func run() error {
 		return fmt.Errorf("unable to sign: %w", err)
 	}
 
-	fmt.Println(hexutil.Encode(sig))
+	fmt.Println("SIG:", hexutil.Encode(sig))
+
+	// =========================================================================
+	// OVER THE WIRE
+
+	publicKey, err := crypto.SigToPub(v, sig)
+	if err != nil {
+		return fmt.Errorf("unable to pub: %w", err)
+	}
+
+	fmt.Println("PUB", crypto.PubkeyToAddress(*publicKey).String())
 
 	return nil
 }
