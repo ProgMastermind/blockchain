@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/big"
 
+	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -131,6 +132,26 @@ func run() error {
 	}
 
 	fmt.Println("V|R|S", vv, r, s)
+
+	fmt.Println("=================== TX ==========================")
+
+	billTx, err := database.NewTx(1, 1,
+		"0xF01813E4B85e178A83e29B8E7bF26BD830a25f32",
+		"0xbEE6ACE826eC3DE1B6349888B9151B92522F7F76",
+		1000,
+		0,
+		nil)
+
+	if err != nil {
+		return fmt.Errorf("unable to Billtx: %w", err)
+	}
+
+	signedTx, err := billTx.Sign(privateKey)
+	if err != nil {
+		return fmt.Errorf("unable to signedTx: %w", err)
+	}
+
+	fmt.Println(signedTx)
 
 	return nil
 }
