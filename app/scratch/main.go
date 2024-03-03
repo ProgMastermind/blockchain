@@ -41,7 +41,8 @@ func run() error {
 		return fmt.Errorf("unable to marshal: %w", err)
 	}
 
-	v := crypto.Keccak256(data)
+	stamp := []byte(fmt.Sprintf("\x19Ardan Signed Message:\n%d", len(data)))
+	v := crypto.Keccak256(stamp, data)
 
 	sig, err := crypto.Sign(v, privateKey)
 	if err != nil {
@@ -73,7 +74,9 @@ func run() error {
 		return fmt.Errorf("unable to marshal: %w", err)
 	}
 
-	v2 := crypto.Keccak256(data2)
+	stamp = []byte(fmt.Sprintf("\x19Ardan Signed Message:\n%d", len(data)))
+
+	v2 := crypto.Keccak256(stamp, data2)
 
 	sig2, err := crypto.Sign(v2, privateKey)
 	if err != nil {
@@ -109,7 +112,9 @@ func run() error {
 		return fmt.Errorf("unable to marshal: %w", err)
 	}
 
-	v3 := crypto.Keccak256(data3)
+	stamp = []byte(fmt.Sprintf("\x19Ardan Signed Message:\n%d", len(data)))
+
+	v3 := crypto.Keccak256(stamp, data3)
 
 	publicKey3, err := crypto.SigToPub(v3, sig2)
 	if err != nil {
