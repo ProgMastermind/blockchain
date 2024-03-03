@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -122,5 +124,35 @@ func run() error {
 	}
 
 	fmt.Println("PUB", crypto.PubkeyToAddress(*publicKey3).String())
+
+	vv, r, s, err := ToVRSFromHexSignature(hexutil.Encode(sig2))
+	if err != nil {
+		return fmt.Errorf("unable to convert: %w", err)
+	}
+
+	fmt.Println("V|R|S", vv, r, s)
+
 	return nil
+}
+
+// ToVRSFromHexSignature converts a hex representation of the signature into
+// its R, S and V parts.
+func ToVRSFromHexSignature(sigStr string) (v, r, s *big.Int, err error) {
+	// you are decoding by not include tha "0x" part
+	sig, err := hex.DecodeString(sigStr[2:])
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// we use SetBytes here, because the integer value that being created for r and s
+	// ended up being like 31 byte value , it was smaller than 32 bytes it has leding zero
+	// in byte signature, so out of big int we have a wrong number
+	// what SetBytes does is that it identifies whether the number is smaller and says that
+	// 32 bytes of capacity we have here and store it  properly and convert it back so we can work.
+
+	r = big.NewInt(0).SetBytes(sig[:32])
+	s = big.NewInt(0).SetBytes(sig[32:64])
+	v = big.NewInt(0).SetBytes([]byte{sig[64]})
+
+	return v, r, s, nil
 }
