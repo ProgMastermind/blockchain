@@ -8,6 +8,7 @@ import (
 
 	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/genesis"
+	"github.com/ardanlabs/blockchain/foundation/blockchain/mempool"
 )
 
 // =============================================================================
@@ -19,9 +20,10 @@ type EventHandler func(v string, args ...any)
 // Config represents the configuration required to start
 // the blockchain node.
 type Config struct {
-	BeneficiaryID database.AccountID // acccount which is receiving mining reward or gas fees for this node
-	Genesis       genesis.Genesis
-	EvHandler     EventHandler
+	BeneficiaryID  database.AccountID // acccount which is receiving mining reward or gas fees for this node
+	Genesis        genesis.Genesis
+	SelectStrategy string
+	EvHandler      EventHandler
 }
 
 // State manages the blockchain database.
@@ -33,6 +35,7 @@ type State struct {
 	evHandler EventHandler
 
 	genesis genesis.Genesis
+	mempool *mempool.Mempool
 	db      *database.Database
 }
 
@@ -52,6 +55,12 @@ func New(cfg Config) (*State, error) {
 		return nil, err
 	}
 
+	// Constructs a mempool with the specified sort strategy
+	mempool, err := mempool.NewWithStrategy(cfg.SelectStrategy)
+	if err != nil {
+		return nil, err
+	}
+
 	// Create the State to provide support for managing the blockchain.
 	state := State{
 		beneficiaryID: cfg.BeneficiaryID,
@@ -59,6 +68,7 @@ func New(cfg Config) (*State, error) {
 		evHandler: ev,
 
 		genesis: cfg.Genesis,
+		mempool: mempool,
 		db:      db,
 	}
 
@@ -71,4 +81,24 @@ func (s *State) Shutdown() error {
 	defer s.evHandler("state: shutdown: completed")
 
 	return nil
+}
+
+// MempoolLength returns the current length of the mempool.
+func (s *State) MempoolLength() int {
+	return s.mempool.Count()
+}
+
+// Mempool returns a copy of the mempool.
+func (s *State) Mempool() []database.BlockTx {
+	return s.mempool.PickBest()
+}
+
+// UpsertMempool adds a new transaction to the mempool.
+func (s *State) UpsertMempool(tx database.BlockTx) error {
+	return s.mempool.Upsert(tx)
+}
+
+// Accounts returns a copy of the database accounts.
+func (s *State) Accounts() map[database.AccountID]database.Account {
+	return s.db.Copy()
 }
