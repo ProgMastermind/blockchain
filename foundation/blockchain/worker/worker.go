@@ -84,10 +84,10 @@ func (w *Worker) Shutdown() {
 // pending in the channel, just return since a mining operation will start.
 func (w *Worker) SignalStartMining() {
 
-	// Only PoW requires signalling to start mining.
-	if w.state.Consensus() != state.ConsensusPOW {
-		return
-	}
+	// // Only PoW requires signalling to start mining.
+	// if w.state.Consensus() != state.ConsensusPOW {
+	// 	return
+	// }
 
 	select {
 	case w.startMining <- true:
@@ -100,10 +100,10 @@ func (w *Worker) SignalStartMining() {
 // to stop immediately.
 func (w *Worker) SignalCancelMining() {
 
-	// Only PoW requires signalling to cancel mining.
-	if w.state.Consensus() != state.ConsensusPOW {
-		return
-	}
+	// // Only PoW requires signalling to cancel mining.
+	// if w.state.Consensus() != state.ConsensusPOW {
+	// 	return
+	// }
 
 	select {
 	case w.cancelMining <- true:

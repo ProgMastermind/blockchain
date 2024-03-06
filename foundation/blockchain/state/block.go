@@ -28,6 +28,9 @@ func (s *State) MineNewBlock(ctx context.Context) (database.Block, error) {
 	// Pick the best transactions from the mempool.
 	trans := s.mempool.PickBest(s.genesis.TransPerBlock)
 
+	// TODO: HACK PLEASE REMOVE
+	s.mempool.Truncate()
+
 	// If PoA is being used, drop the difficulty down to 1 to speed up
 	// the mining operation.
 	difficulty := s.genesis.Difficulty
@@ -61,6 +64,5 @@ func (s *State) MineNewBlock(ctx context.Context) (database.Block, error) {
 	// 	return database.Block{}, err
 	// }
 
-	s.mempool.Truncate()
 	return block, nil
 }
