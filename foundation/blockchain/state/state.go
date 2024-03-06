@@ -11,6 +11,27 @@ import (
 	"github.com/ardanlabs/blockchain/foundation/blockchain/mempool"
 )
 
+/*
+	-- Blockchain
+	On chain fork, only remove the block need to be removed and reset.
+	Send batch of mempool tx's from txshare channel.
+	On Resync, only remove the blocks we know are bad.
+		Pass blk number to database.Reset
+		Set the correct lastblock
+		Accounting: Reverse each block
+
+	-- Testing
+	Worker concurrent testing
+*/
+
+// =============================================================================
+
+// The set of different consensus protocols that can be used.
+const (
+	ConsensusPOW = "POW"
+	ConsensusPOA = "POA"
+)
+
 // =============================================================================
 
 // EventHandler defines a function that is called when events
@@ -24,6 +45,7 @@ type Config struct {
 	Genesis        genesis.Genesis
 	SelectStrategy string
 	EvHandler      EventHandler
+	Consensus      string
 }
 
 // State manages the blockchain database.
@@ -33,6 +55,7 @@ type State struct {
 	beneficiaryID database.AccountID
 
 	evHandler EventHandler
+	consensus string
 
 	genesis genesis.Genesis
 	mempool *mempool.Mempool
@@ -66,10 +89,10 @@ func New(cfg Config) (*State, error) {
 		beneficiaryID: cfg.BeneficiaryID,
 
 		evHandler: ev,
-
-		genesis: cfg.Genesis,
-		mempool: mempool,
-		db:      db,
+		consensus: cfg.Consensus,
+		genesis:   cfg.Genesis,
+		mempool:   mempool,
+		db:        db,
 	}
 
 	return &state, nil
@@ -81,6 +104,11 @@ func (s *State) Shutdown() error {
 	defer s.evHandler("state: shutdown: completed")
 
 	return nil
+}
+
+// Consensus returns a copy of consensus algorithm being used.
+func (s *State) Consensus() string {
+	return s.consensus
 }
 
 // Genesis returns a copy of the genesis information.
