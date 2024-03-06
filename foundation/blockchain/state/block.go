@@ -61,5 +61,6 @@ func (s *State) MineNewBlock(ctx context.Context) (database.Block, error) {
 	// 	return database.Block{}, err
 	// }
 
+	s.mempool.Truncate()
 	return block, nil
 }
