@@ -48,6 +48,7 @@ type Worker interface {
 // the blockchain node.
 type Config struct {
 	BeneficiaryID  database.AccountID // acccount which is receiving mining reward or gas fees for this node
+	Storage        database.Storage
 	Genesis        genesis.Genesis
 	SelectStrategy string
 	EvHandler      EventHandler
@@ -61,6 +62,7 @@ type State struct {
 	beneficiaryID database.AccountID
 
 	evHandler EventHandler
+	storage   database.Storage
 	consensus string
 
 	genesis genesis.Genesis
@@ -81,7 +83,7 @@ func New(cfg Config) (*State, error) {
 	}
 
 	// Access the storage for the blockchain.
-	db, err := database.New(cfg.Genesis, ev)
+	db, err := database.New(cfg.Genesis, cfg.Storage, ev)
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +97,7 @@ func New(cfg Config) (*State, error) {
 	// Create the State to provide support for managing the blockchain.
 	state := State{
 		beneficiaryID: cfg.BeneficiaryID,
+		storage:       cfg.Storage,
 
 		evHandler: ev,
 		consensus: cfg.Consensus,
