@@ -125,6 +125,11 @@ func (s *State) Shutdown() error {
 	return nil
 }
 
+// LatestBlock returns a copy the current latest block
+func (s *State) LastestBlock() database.Block {
+	return s.db.LatestBlock()
+}
+
 // Consensus returns a copy of consensus algorithm being used.
 func (s *State) Consensus() string {
 	return s.consensus
