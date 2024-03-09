@@ -14,6 +14,24 @@ import (
 
 const baseURL = "http://%s/v1/node"
 
+// NetRequestPeerStatus looks for new nodes on the blockchain by asking
+// known nodes for their peer list. New nodes are added to the list.
+func (s *State) NetRequestPeerStatus(pr peer.Peer) (peer.PeerStatus, error) {
+	s.evHandler("state: NetRequestPeerStatus: started: %s", pr)
+	defer s.evHandler("state: NetRequestPeerStatus: completed: %s", pr)
+
+	url := fmt.Sprintf("%s/status", fmt.Sprintf(baseURL, pr.Host))
+
+	var ps peer.PeerStatus
+	if err := send(http.MethodGet, url, nil, &ps); err != nil {
+		return peer.PeerStatus{}, err
+	}
+
+	s.evHandler("state: NetRequestPeerStatus: peer-node[%s]: latest-blknum[%d]: peer-list[%s]", pr, ps.LatestBlockNumber, ps.KnownPeers)
+
+	return ps, nil
+}
+
 // NetSendBlockToPeers takes the new mined block and sends it to all know peers.
 func (s *State) NetSendBlockToPeers(block database.Block) error {
 	s.evHandler("state: NetSendBlockToPeers: started")

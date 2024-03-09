@@ -32,7 +32,7 @@ func (w *Worker) Sync() {
 		}
 
 		// If this peer has blocks we don't have, we need to add them.
-		if peerStatus.LatestBlockNumber > w.state.LatestBlock().Header.Number {
+		if peerStatus.LatestBlockNumber > w.state.LastestBlock().Header.Number {
 			w.evHandler("worker: sync: retrievePeerBlocks: %s: latestBlockNumber[%d]", peer.Host, peerStatus.LatestBlockNumber)
 
 			if err := w.state.NetRequestPeerBlocks(peer); err != nil {
