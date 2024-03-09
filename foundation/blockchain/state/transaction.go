@@ -24,6 +24,7 @@ func (s *State) UpsertWalletTransaction(signedTx database.SignedTx) error {
 		return err
 	}
 
+	s.Worker.SignalShareTx(tx)
 	s.Worker.SignalStartMining()
 
 	return nil
