@@ -9,6 +9,7 @@ import (
 	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/genesis"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/mempool"
+	"github.com/ardanlabs/blockchain/foundation/blockchain/peer"
 )
 
 /*
@@ -48,8 +49,10 @@ type Worker interface {
 // the blockchain node.
 type Config struct {
 	BeneficiaryID  database.AccountID // acccount which is receiving mining reward or gas fees for this node
+	Host           string
 	Storage        database.Storage
 	Genesis        genesis.Genesis
+	KnownPeers     *peer.PeerSet
 	SelectStrategy string
 	EvHandler      EventHandler
 	Consensus      string
@@ -60,10 +63,11 @@ type State struct {
 	mu sync.RWMutex
 
 	beneficiaryID database.AccountID
-
-	evHandler EventHandler
-	storage   database.Storage
-	consensus string
+	host          string
+	evHandler     EventHandler
+	consensus     string
+	KnownPeers    *peer.PeerSet
+	storage       database.Storage
 
 	genesis genesis.Genesis
 	mempool *mempool.Mempool
@@ -97,13 +101,14 @@ func New(cfg Config) (*State, error) {
 	// Create the State to provide support for managing the blockchain.
 	state := State{
 		beneficiaryID: cfg.BeneficiaryID,
+		host:          cfg.Host,
 		storage:       cfg.Storage,
-
-		evHandler: ev,
-		consensus: cfg.Consensus,
-		genesis:   cfg.Genesis,
-		mempool:   mempool,
-		db:        db,
+		evHandler:     ev,
+		consensus:     cfg.Consensus,
+		KnownPeers:    cfg.KnownPeers,
+		genesis:       cfg.Genesis,
+		mempool:       mempool,
+		db:            db,
 	}
 
 	// The Worker is not set here. The call to worker.Run will assign itself
@@ -131,6 +136,11 @@ func (s *State) Shutdown() error {
 // LatestBlock returns a copy the current latest block
 func (s *State) LastestBlock() database.Block {
 	return s.db.LatestBlock()
+}
+
+// Host returns a copy of host information.
+func (s *State) Host() string {
+	return s.host
 }
 
 // Consensus returns a copy of consensus algorithm being used.
@@ -161,4 +171,28 @@ func (s *State) UpsertMempool(tx database.BlockTx) error {
 // Accounts returns a copy of the database accounts.
 func (s *State) Accounts() map[database.AccountID]database.Account {
 	return s.db.Copy()
+}
+
+// AddKnownPeer provides the ability to add a new peer to
+// the known peer list.
+func (s *State) AddKnownPeer(peer peer.Peer) bool {
+	return s.KnownPeers.Add(peer)
+}
+
+// RemoveKnownPeer provides the ability to remove a peer from
+// the known peer list.
+func (s *State) RemoveKnownPeer(peer peer.Peer) {
+	s.KnownPeers.Remove(peer)
+}
+
+// KnownExternalPeers retrieves a copy of the known peer list without
+// including this node.
+func (s *State) KnownExternalPeers() []peer.Peer {
+	return s.KnownPeers.Copy(s.host)
+}
+
+// KnownPeers retrieves a copy of the full known peer list which includes
+// this node as well. Used by the PoA selection algorithm.
+func (s *State) KnowPeers() []peer.Peer {
+	return s.KnownPeers.Copy("")
 }
