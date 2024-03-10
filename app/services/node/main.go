@@ -69,6 +69,7 @@ func run(log *zap.SugaredLogger) error {
 			DBPath         string   `conf:"default:zblock/miner1/"`
 			SelectStrategy string   `conf:"default:Tip"`
 			OriginPeers    []string `conf:"default:0.0.0.0:9080"`
+			Consensus      string   `conf:"default:POA"` // Change to POA to run Proof of Authority
 		}
 		NameService struct {
 			Folder string `conf:"default:zblock/accounts/"`
@@ -176,6 +177,7 @@ func run(log *zap.SugaredLogger) error {
 		SelectStrategy: cfg.State.SelectStrategy,
 		KnownPeers:     peerSet,
 		EvHandler:      ev,
+		Consensus:      cfg.State.Consensus,
 	})
 	if err != nil {
 		return err
