@@ -10,6 +10,10 @@ import (
 	"github.com/ardanlabs/blockchain/foundation/blockchain/state"
 )
 
+// peerUpdateInterval represents the interval of finding new peer nodes
+// and updating the blockchain on disk with missing blocks.
+const peerUpdateInterval = time.Second * 10
+
 // =============================================================================
 
 // Worker manages the POW workflows for the blockchain.
@@ -29,6 +33,7 @@ type Worker struct {
 func Run(st *state.State, evHandler state.EventHandler) {
 	w := Worker{
 		state:        st,
+		ticker:       *time.NewTicker(peerUpdateInterval),
 		shut:         make(chan struct{}),
 		startMining:  make(chan bool, 1),
 		cancelMining: make(chan bool, 1),
@@ -44,6 +49,7 @@ func Run(st *state.State, evHandler state.EventHandler) {
 
 	// Load the set of operations we need to run.
 	operations := []func(){
+		w.peerOperations,
 		w.powOperations,
 		w.shareTxOperations,
 	}
